@@ -1,0 +1,115 @@
+---
+title: "Bellabeat Capstone"
+author: "Sara Romero"
+date: "2023-12-06"
+output:
+  pdf_document: default
+  html_document: default
+Email: SaraRomero43@gmail.com
+LinkedIn: linkedin.com/in/sararomero43/
+---
+#Introduction
+As part of my Google Data Analytics Certificate capstone project, I assumed the role of a marketing analyst, focusing on Bellabeat—a technology manufacturer specializing in women's health products.
+
+#Questions
+what are some trends in personal health tracker usage?
+How can we apply these trends to Bellabeat?
+
+#prepare
+30 participants generated 18 data sets, which were gathered through Amazon Mechanical Turk from December 3, 2016, to December 5, 2016.
+
+LIMITATION
+This data lacks demographic details, potentially limiting its applicability to Bellabeats' female customer base. Furthermore, the small sample size of only 30 participants poses challenges for conducting a comprehensive analysis.
+
+#process
+I chose to use 3 of the 18 data sets:
+  dailyActivity_merged
+  SleepDay_merged
+  weightLoginfo_merged
+These particular datasets were picked due to their comprehensive inclusion of information found in the other sets.
+
+I used Google sheets to clean by:
+  check for duplicates 
+  trim white space
+  formatted the date and time into just the date
+
+#Analyze & Share
+
+##Importing data sets
+ Only using 3 of the 18 sets that are available as they have everything needed.
+
+```{r}
+DailyActivity <- read_excel("D:/data analyst/projects/BellaBeat/BellabeatData11.23.xlsx", 
+sheet = "dailyActivity_merged.csv")
+
+Sleep <- read_excel("D:/data analyst/projects/BellaBeat/BellabeatData11.23.xlsx", 
+sheet = "sleepDay_merged")
+
+WeightLog <- read_excel("D:/data analyst/projects/BellaBeat/BellabeatData11.23.xlsx", 
+sheet = "weightLogInfo_merged")
+```
+##using 
+  comparing fairly/very active against light/sedentary activity by changing the minutes to hours and then putting them in a table.
+
+started by getting the minutes switched to hours and placing it in a data frame. 
+```{r}
+SedentaryHour <- DailyActivity$SedentaryMinutes/60
+LightlyActiveHour <- DailyActivity$LightlyActiveMinutes/60
+FairlyActiveHour <- DailyActivity$FairlyActiveMinutes/60
+VeryActiveHour <- DailyActivity$VeryActiveMinutes/60
+
+HourlyActivity <- data.frame(SedentaryHour, LightlyActiveHour, FairlyActiveHour, VeryActiveHour)
+
+View(HourlyActivity)
+```
+###merging HourlyActivity into DailyActivity
+```{r}
+AllActivity <- merge(HourlyActivity, DailyActivity, Id="Id" , all.HourlyActivity=TRUE)
+
+View(AllActivity)
+``` 
+##
+
+```{r}
+DA_grp_ID = AllActivity %>%
+  group_by(Id) %>%
+  summarise(Light_sedentary = sum(SedentaryHour, 
+            LightlyActiveHour),
+            Very_Fairly = sum(FairlyActiveHour,                      VeryActiveHour),
+            .groups = 'drop')
+
+
+View(DA_grp_ID)
+```
+
+
+Just splitting it up so that it makes the chart THEN you can view it.
+
+```{r}
+view(DA_grp_ID)
+```
+
+## creating a graph for DA_grp_ID
+  This is in minuets 
+```{r}
+ggplot(data = DA_grp_ID, mapping = aes(fill = Light_sedentary, factor(Very_Fairly), y= Light_sedentary)) +
+  geom_bar(width = .85, position = "stack", stat= "identity") +
+  facet_grid(scales = "free") +
+  theme(axis.text.x = element_text(angle=90, vjust=5, hjust=1))
+```
+##Creating bar graph  
+  I want to see if I can find any trends between Total steps and Calories.
+
+```{r}
+ggplot(data = DailyActivity, mapping = aes(x=Calories, y=TotalSteps)) +
+  geom_bar(color= 'blue', stat = 'identity')
+  
+```
+
+##Creating stacked bar graph
+  Looking at the total time in bed verses total time asleep. Data is in minutes so 480mins = 8hrs.
+
+```{r}
+ggplot(data = Sleep, mapping = aes(x=TotalTimeInBed, y=TotalMinutesAsleep)) +
+  geom_point()
+```
